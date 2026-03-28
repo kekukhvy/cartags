@@ -49,6 +49,8 @@ class RegionResult:
     country_name: str
     emoji: str
     all_plate_codes: tuple[str, ...] = ()
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 @dataclass(frozen=True)
@@ -85,7 +87,8 @@ def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
 # ---------------------------------------------------------------------------
 
 _FIND_REGION_SQL = """
-SELECT r.id, r.plate_code, c.code AS country_code, c.emoji,
+SELECT r.id, r.plate_code, r.latitude, r.longitude,
+       c.code AS country_code, c.emoji,
        rname.value  AS name_local,
        rgroup.value AS region_group,
        cname.value  AS country_name
@@ -110,7 +113,8 @@ WHERE UPPER(c.code) = UPPER(?) AND UPPER(r.plate_code) = UPPER(?)
 """
 
 _FIND_BY_PLATE_SQL = """
-SELECT r.id, r.plate_code, c.code AS country_code, c.emoji,
+SELECT r.id, r.plate_code, r.latitude, r.longitude,
+       c.code AS country_code, c.emoji,
        rname.value  AS name_local,
        rgroup.value AS region_group,
        cname.value  AS country_name
@@ -205,13 +209,14 @@ def _build_region_result(
 
     Args:
         row:             A row with name_local, region_group, country_code,
-                         country_name, and emoji columns.
+                         country_name, emoji, and optional latitude/longitude.
         plate_code:      The primary plate code for this result.
         all_plate_codes: All plate codes for the region (grouped queries only).
 
     Returns:
         A frozen RegionResult dataclass.
     """
+    keys = row.keys()
     return RegionResult(
         plate_code=plate_code,
         name_local=row["name_local"] or "",
@@ -220,6 +225,8 @@ def _build_region_result(
         country_name=row["country_name"] or "",
         emoji=row["emoji"],
         all_plate_codes=all_plate_codes,
+        latitude=row["latitude"] if "latitude" in keys else None,
+        longitude=row["longitude"] if "longitude" in keys else None,
     )
 
 

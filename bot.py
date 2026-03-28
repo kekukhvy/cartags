@@ -14,7 +14,7 @@ from telegram.ext import Application, ApplicationBuilder, CallbackQueryHandler, 
 from constants import BotCommand, CallbackPrefix
 from handlers.country import country_handler, country_page_callback, list_handler, select_country_callback
 from handlers.language import language_handler, set_language_callback
-from handlers.search import plate_handler, search_handler
+from handlers.search import map_callback, plate_handler, search_handler
 from handlers.start import about_handler, help_handler, start_handler
 
 load_dotenv(Path(__file__).parent / ".env")
@@ -92,6 +92,11 @@ def _build_application():
     app.add_handler(CallbackQueryHandler(
         set_language_callback,
         pattern=f"^{CallbackPrefix.SET_LANG}:",
+    ))
+
+    app.add_handler(CallbackQueryHandler(
+        map_callback,
+        pattern=f"^{CallbackPrefix.MAP_REGION}:",
     ))
 
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_handler))

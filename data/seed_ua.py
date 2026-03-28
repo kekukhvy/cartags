@@ -28,6 +28,119 @@ _COUNTRY_TRANSLATIONS: dict[str, str] = {
     "uk": "Україна",
 }
 
+# Map of plate_code → (latitude, longitude) for regions with known coordinates.
+# Ukrainian plate codes are regional; we pin the oblast centre city for each series.
+_COORDS: dict[str, tuple[float, float]] = {
+    "AA": (50.4501, 30.5234),   # Kyiv
+    "KA": (50.4501, 30.5234),
+    "TT": (50.4501, 30.5234),
+    "TA": (50.4501, 30.5234),
+    "AI": (50.4501, 30.5234),   # Kyiv Oblast (Kyiv city centre)
+    "KI": (50.4501, 30.5234),
+    "TI": (50.4501, 30.5234),
+    "ME": (50.4501, 30.5234),
+    "AB": (49.2331, 28.4682),   # Vinnytsia
+    "KB": (49.2331, 28.4682),
+    "MM": (49.2331, 28.4682),
+    "OK": (49.2331, 28.4682),
+    "AC": (50.7472, 25.3254),   # Lutsk
+    "KC": (50.7472, 25.3254),
+    "CM": (50.7472, 25.3254),
+    "TC": (50.7472, 25.3254),
+    "AE": (48.4647, 35.0462),   # Dnipro
+    "KE": (48.4647, 35.0462),
+    "PP": (48.4647, 35.0462),
+    "MI": (48.4647, 35.0462),
+    "AT": (48.9226, 24.7111),   # Ivano-Frankivsk
+    "KT": (48.9226, 24.7111),
+    "TO": (48.9226, 24.7111),
+    "XC": (48.9226, 24.7111),
+    "AX": (49.9935, 36.2304),   # Kharkiv
+    "KX": (49.9935, 36.2304),
+    "XX": (49.9935, 36.2304),
+    "EX": (49.9935, 36.2304),
+    "BC": (49.8397, 24.0297),   # Lviv
+    "HC": (49.8397, 24.0297),
+    "CC": (49.8397, 24.0297),
+    "EC": (49.8397, 24.0297),
+    "BH": (46.4825, 30.7233),   # Odessa
+    "HH": (46.4825, 30.7233),
+    "OO": (46.4825, 30.7233),
+    "EH": (46.4825, 30.7233),
+    "AO": (48.6208, 22.2879),   # Uzhhorod
+    "KO": (48.6208, 22.2879),
+    "MT": (48.6208, 22.2879),
+    "MO": (48.6208, 22.2879),
+    "AP": (47.8388, 35.1396),   # Zaporizhzhia
+    "KP": (47.8388, 35.1396),
+    "TP": (47.8388, 35.1396),
+    "MP": (47.8388, 35.1396),
+    "AH": (48.0159, 37.8028),   # Donetsk
+    "KH": (48.0159, 37.8028),
+    "TH": (48.0159, 37.8028),
+    "MH": (48.0159, 37.8028),
+    "BA": (48.5132, 32.2597),   # Kropyvnytskyi
+    "HA": (48.5132, 32.2597),
+    "XA": (48.5132, 32.2597),
+    "EA": (48.5132, 32.2597),
+    "BK": (50.6199, 26.2516),   # Rivne
+    "HK": (50.6199, 26.2516),
+    "XK": (50.6199, 26.2516),
+    "EK": (50.6199, 26.2516),
+    "BI": (49.5883, 34.5514),   # Poltava
+    "HI": (49.5883, 34.5514),
+    "XI": (49.5883, 34.5514),
+    "EI": (49.5883, 34.5514),
+    "BM": (50.9077, 34.7981),   # Sumy
+    "HM": (50.9077, 34.7981),
+    "XM": (50.9077, 34.7981),
+    "EM": (50.9077, 34.7981),
+    "BO": (49.5535, 25.5948),   # Ternopil
+    "HO": (49.5535, 25.5948),
+    "XO": (49.5535, 25.5948),
+    "EO": (49.5535, 25.5948),
+    "BT": (46.6354, 32.6169),   # Kherson
+    "HT": (46.6354, 32.6169),
+    "XT": (46.6354, 32.6169),
+    "ET": (46.6354, 32.6169),
+    "BX": (49.4229, 26.9871),   # Khmelnytskyi
+    "HX": (49.4229, 26.9871),
+    "OX": (49.4229, 26.9871),
+    "PX": (49.4229, 26.9871),
+    "CA": (49.4285, 32.0619),   # Cherkasy
+    "IA": (49.4285, 32.0619),
+    "OA": (49.4285, 32.0619),
+    "PA": (49.4285, 32.0619),
+    "CB": (51.4982, 31.2893),   # Chernihiv
+    "IB": (51.4982, 31.2893),
+    "OB": (51.4982, 31.2893),
+    "PB": (51.4982, 31.2893),
+    "CE": (48.2921, 25.9358),   # Chernivtsi
+    "IE": (48.2921, 25.9358),
+    "OE": (48.2921, 25.9358),
+    "PE": (48.2921, 25.9358),
+    "BB": (48.5679, 39.3404),   # Luhansk
+    "HB": (48.5679, 39.3404),
+    "EE": (48.5679, 39.3404),
+    "EB": (48.5679, 39.3404),
+    "BE": (46.9750, 31.9946),   # Mykolaiv
+    "HE": (46.9750, 31.9946),
+    "XE": (46.9750, 31.9946),
+    "XH": (46.9750, 31.9946),
+    "AM": (50.2547, 28.6587),   # Zhytomyr
+    "KM": (50.2547, 28.6587),
+    "TM": (50.2547, 28.6587),
+    "MB": (50.2547, 28.6587),
+    "AK": (44.9521, 34.1024),   # Simferopol
+    "MA": (44.9521, 34.1024),
+    "TK": (44.9521, 34.1024),
+    "MK": (44.9521, 34.1024),
+    "CH": (44.6166, 33.5254),   # Sevastopol
+    "IH": (44.6166, 33.5254),
+    "OH": (44.6166, 33.5254),
+    "PH": (44.6166, 33.5254),
+}
+
 # (plate_code, name_en, name_de, name_ru, name_uk,
 #              group_en, group_de, group_ru, group_uk)
 _REGIONS: list[tuple[str, str, str, str, str, str, str, str, str]] = [
@@ -388,12 +501,21 @@ def _seed_single_region(
     conn: sqlite3.Connection,
     country_id: int,
     row: tuple[str, str, str, str, str, str, str, str, str],
+    coords: tuple[float, float] | None,
 ) -> None:
     """Insert one region and its 8 translations (4 name + 4 region_group)."""
     plate_code, n_en, n_de, n_ru, n_uk, g_en, g_de, g_ru, g_uk = row
+    lat = coords[0] if coords else None
+    lon = coords[1] if coords else None
     conn.execute(
-        "INSERT OR IGNORE INTO regions (country_id, plate_code) VALUES (?, ?)",
-        (country_id, plate_code.upper()),
+        "INSERT OR IGNORE INTO regions"
+        " (country_id, plate_code, latitude, longitude) VALUES (?, ?, ?, ?)",
+        (country_id, plate_code.upper(), lat, lon),
+    )
+    conn.execute(
+        "UPDATE regions SET latitude = ?, longitude = ?"
+        " WHERE country_id = ? AND plate_code = ? AND latitude IS NULL",
+        (lat, lon, country_id, plate_code.upper()),
     )
     result = conn.execute(
         "SELECT id FROM regions WHERE country_id = ? AND plate_code = ?",
@@ -435,7 +557,8 @@ def seed_regions(conn: sqlite3.Connection) -> None:
     result = conn.execute("SELECT id FROM countries WHERE code = ?", (COUNTRY_CODE,)).fetchone()
     country_id: int = result[0]
     for region_row in _REGIONS:
-        _seed_single_region(conn, country_id, region_row)
+        coords = _COORDS.get(region_row[0].upper())
+        _seed_single_region(conn, country_id, region_row, coords)
     logger.info("Seeded %d UA regions", len(_REGIONS))
 
 

@@ -15,6 +15,22 @@ from utils.search_parser import SearchMode, parse_search_query
 logger = logging.getLogger(__name__)
 
 
+def _map_button(result: RegionResult) -> InlineKeyboardMarkup | None:
+    """Return a 'Show on map' inline keyboard if coordinates are available.
+
+    Args:
+        result: Region result that may contain latitude/longitude.
+
+    Returns:
+        InlineKeyboardMarkup with the map button, or None if no coords.
+    """
+    if result.latitude is None or result.longitude is None:
+        return None
+    callback = f"{CallbackPrefix.MAP_REGION}:{result.country_code}:{result.plate_code}"
+    button = InlineKeyboardButton(text="📍 Show on map", callback_data=callback)
+    return InlineKeyboardMarkup([[button]])
+
+
 async def _reply_single_result(update: Update, country: str, plate: str, lang: str) -> None:
     """Look up and send a single country+plate result.
 
@@ -29,7 +45,37 @@ async def _reply_single_result(update: Update, country: str, plate: str, lang: s
         msg = t("not_found", lang, plate=plate, country=country)
         await update.message.reply_text(msg, parse_mode="HTML")
         return
-    await update.message.reply_text(format_region_response(result), parse_mode="HTML")
+    markup = _map_button(result)
+    await update.message.reply_text(
+        format_region_response(result),
+        parse_mode="HTML",
+        reply_markup=markup,
+    )
+
+
+async def map_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle 'Show on map' button — send a Telegram venue for the region.
+
+    Args:
+        update:  Incoming Telegram update with callback query.
+        context: Handler context (unused).
+    """
+    query = update.callback_query
+    _, country_code, plate_code = query.data.split(":", 2)
+    lang = resolve_user_lang(update)
+    result = find_region(country_code, plate_code, lang=lang)
+    if result is None or result.latitude is None or result.longitude is None:
+        await query.answer(t("map_unavailable", lang), show_alert=True)
+        return
+    await query.answer()
+    title = result.name_local
+    address = f"{result.country_name} · {result.plate_code}"
+    await query.message.reply_venue(
+        latitude=result.latitude,
+        longitude=result.longitude,
+        title=title,
+        address=address,
+    )
 
 
 async def _reply_ambiguous(update: Update, plate: str, lang: str) -> None:
@@ -46,7 +92,12 @@ async def _reply_ambiguous(update: Update, plate: str, lang: str) -> None:
         await update.message.reply_text(msg, parse_mode="HTML")
         return
     if len(results) == 1:
-        await update.message.reply_text(format_region_response(results[0]), parse_mode="HTML")
+        markup = _map_button(results[0])
+        await update.message.reply_text(
+            format_region_response(results[0]),
+            parse_mode="HTML",
+            reply_markup=markup,
+        )
         return
     trimmed = results[:MAX_AMBIGUOUS_RESULTS]
     header = t("ambiguous_header", lang)
@@ -70,8 +121,8 @@ def _build_ambiguous_buttons(
     """
     buttons = [
         [InlineKeyboardButton(
-            text=f"{r.emoji} {r.country_code}",
-            callback_data=f"{CallbackPrefix.COUNTRY_PAGE}:{r.country_code}:1",
+            text=f"📍 {r.emoji} {r.country_code} — Show on map",
+            callback_data=f"{CallbackPrefix.MAP_REGION}:{r.country_code}:{r.plate_code}",
         )]
         for r in results
     ]

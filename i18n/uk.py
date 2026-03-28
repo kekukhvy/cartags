@@ -39,4 +39,5 @@ STRINGS: dict[str, str] = {
     "language_prompt": "Оберіть мову:",
     "language_set": "Мову встановлено: Українська.",
     "unknown_input": "Не зрозумів. Спробуй: <code>DE M</code> або /help",
+    "map_unavailable": "Координати для цього регіону недоступні.",
 }

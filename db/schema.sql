@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS regions (
     country_id  INTEGER NOT NULL REFERENCES countries(id),
     plate_code  TEXT NOT NULL,  -- stored UPPERCASE
     wikipedia_url TEXT,
+    latitude    REAL,
+    longitude   REAL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(country_id, plate_code)
 );

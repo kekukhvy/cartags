@@ -43,4 +43,5 @@ STRINGS: dict[str, str] = {
     "nav_help": "❓ Help",
     "nav_language": "🌐 Language",
     "nav_browse_country": "📋 Browse {country}",
+    "map_unavailable": "No map location available for this region.",
 }

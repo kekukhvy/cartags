@@ -65,6 +65,7 @@ class CallbackPrefix(str, Enum):
     SET_LANG = "sl"          # set language: "sl:<lang>"
     SELECT_COUNTRY = "sc"    # select country from list: "sc:<country_code>"
     NAV = "nav"              # navigation shortcut: "nav:<action>"
+    MAP_REGION = "mr"        # show region on map: "mr:<country_code>:<plate_code>"
 
 
 class NavAction(str, Enum):
