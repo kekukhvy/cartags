@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  cartags-bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./db:/app/db

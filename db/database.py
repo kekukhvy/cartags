@@ -43,11 +43,12 @@ class RegionResult:
     """Typed result returned by region query functions."""
 
     plate_code: str
-    name_local: str         # name in the requested language
-    region_group: str | None  # administrative group in the requested language
+    name_local: str
+    region_group: str | None
     country_code: str
-    country_name: str       # country name in the requested language
+    country_name: str
     emoji: str
+    all_plate_codes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -134,7 +135,8 @@ WHERE UPPER(r.plate_code) = UPPER(?)
 """
 
 _GET_COUNTRY_REGIONS_SQL = """
-SELECT r.id, r.plate_code, c.code AS country_code, c.emoji,
+SELECT GROUP_CONCAT(r.plate_code, ',') AS plate_codes,
+       c.code AS country_code, c.emoji,
        rname.value  AS name_local,
        rgroup.value AS region_group,
        cname.value  AS country_name
@@ -156,8 +158,29 @@ LEFT JOIN translations cname
       AND cname.language_code = ?
       AND cname.field       = 'name'
 WHERE UPPER(c.code) = UPPER(?)
-ORDER BY r.plate_code
+GROUP BY rname.value, rgroup.value
+ORDER BY MIN(r.plate_code)
 LIMIT ? OFFSET ?
+"""
+
+_COUNT_COUNTRY_REGIONS_SQL = """
+SELECT COUNT(*) FROM (
+    SELECT rname.value AS name_local, rgroup.value AS region_group
+    FROM regions r
+    JOIN countries c ON c.id = r.country_id
+    LEFT JOIN translations rname
+           ON rname.entity_type = 'region'
+          AND rname.entity_id   = r.id
+          AND rname.language_code = 'en'
+          AND rname.field       = 'name'
+    LEFT JOIN translations rgroup
+           ON rgroup.entity_type = 'region'
+          AND rgroup.entity_id   = r.id
+          AND rgroup.language_code = 'en'
+          AND rgroup.field      = 'region_group'
+    WHERE UPPER(c.code) = UPPER(?)
+    GROUP BY rname.value, rgroup.value
+)
 """
 
 _GET_ALL_COUNTRIES_SQL = """
@@ -173,23 +196,46 @@ ORDER BY c.sort_order
 """
 
 
-def _row_to_region_result(row: sqlite3.Row) -> RegionResult:
-    """Map a sqlite3.Row from a region query to a RegionResult.
+def _build_region_result(
+    row: sqlite3.Row,
+    plate_code: str,
+    all_plate_codes: tuple[str, ...] = (),
+) -> RegionResult:
+    """Construct a RegionResult from a translated region row.
 
     Args:
-        row: A row from a region SELECT with translations joined.
+        row:             A row with name_local, region_group, country_code,
+                         country_name, and emoji columns.
+        plate_code:      The primary plate code for this result.
+        all_plate_codes: All plate codes for the region (grouped queries only).
 
     Returns:
         A frozen RegionResult dataclass.
     """
     return RegionResult(
-        plate_code=row["plate_code"],
+        plate_code=plate_code,
         name_local=row["name_local"] or "",
         region_group=row["region_group"],
         country_code=row["country_code"],
         country_name=row["country_name"] or "",
         emoji=row["emoji"],
+        all_plate_codes=all_plate_codes,
     )
+
+
+def _row_to_region_result(row: sqlite3.Row) -> RegionResult:
+    """Map a sqlite3.Row from a single-plate region query to a RegionResult."""
+    return _build_region_result(row, plate_code=row["plate_code"])
+
+
+def _grouped_row_to_region_result(row: sqlite3.Row) -> RegionResult:
+    """Map a sqlite3.Row from a grouped region query to a RegionResult.
+
+    The grouped query uses GROUP_CONCAT so plate_codes is a comma-separated
+    string.  The primary plate_code is set to the first code in the list.
+    """
+    codes = tuple(row["plate_codes"].split(","))
+    return _build_region_result(row, plate_code=codes[0], all_plate_codes=codes)
 
 
 def _resolve_conn(conn: sqlite3.Connection | None) -> sqlite3.Connection:
@@ -287,7 +333,7 @@ def get_country_regions(
     rows = connection.execute(
         _GET_COUNTRY_REGIONS_SQL, (lang, lang, lang, country_code, limit, offset)
     ).fetchall()
-    return [_row_to_region_result(r) for r in rows]
+    return [_grouped_row_to_region_result(r) for r in rows]
 
 
 def get_all_countries(
@@ -365,9 +411,6 @@ def count_country_regions(
     """
     connection = _resolve_conn(conn)
     row = connection.execute(
-        "SELECT COUNT(*) FROM regions r "
-        "JOIN countries c ON c.id = r.country_id "
-        "WHERE UPPER(c.code) = UPPER(?)",
-        (country_code,),
+        _COUNT_COUNTRY_REGIONS_SQL, (country_code,)
     ).fetchone()
     return row[0] if row else 0
