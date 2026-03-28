@@ -20,15 +20,6 @@ DB_PATH = Path(__file__).parent / "cartags.db"
 # Enumerations
 # ---------------------------------------------------------------------------
 
-class LanguageCode(str, Enum):
-    """Supported translation language codes."""
-
-    EN = "en"
-    DE = "de"
-    RU = "ru"
-    UK = "uk"
-
-
 class TranslationField(str, Enum):
     """Fields stored in the translations table."""
 
@@ -323,3 +314,60 @@ def get_all_countries(
         )
         for row in rows
     ]
+
+
+def get_user_lang(user_id: int, conn: sqlite3.Connection | None = None) -> str | None:
+    """Return the user's stored language preference, or None if not set.
+
+    Args:
+        user_id: Telegram user ID.
+        conn:    Optional connection for testing.
+
+    Returns:
+        Language code string or None.
+    """
+    connection = _resolve_conn(conn)
+    row = connection.execute(
+        "SELECT lang FROM user_settings WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    return row["lang"] if row else None
+
+
+def set_user_lang(user_id: int, lang: str, conn: sqlite3.Connection | None = None) -> None:
+    """Persist a language preference for a user.
+
+    Args:
+        user_id: Telegram user ID.
+        lang:    Language code to store.
+        conn:    Optional connection for testing.
+    """
+    connection = _resolve_conn(conn)
+    connection.execute(
+        "INSERT INTO user_settings (user_id, lang) VALUES (?, ?)"
+        " ON CONFLICT(user_id) DO UPDATE SET lang = excluded.lang",
+        (user_id, lang),
+    )
+    connection.commit()
+
+
+def count_country_regions(
+    country_code: str,
+    conn: sqlite3.Connection | None = None,
+) -> int:
+    """Return the total number of regions for a country.
+
+    Args:
+        country_code: ISO 3166-1 alpha-2 country code.
+        conn:         Optional connection for testing.
+
+    Returns:
+        Integer count of region rows.
+    """
+    connection = _resolve_conn(conn)
+    row = connection.execute(
+        "SELECT COUNT(*) FROM regions r "
+        "JOIN countries c ON c.id = r.country_id "
+        "WHERE UPPER(c.code) = UPPER(?)",
+        (country_code,),
+    ).fetchone()
+    return row[0] if row else 0

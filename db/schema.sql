@@ -40,3 +40,8 @@ CREATE INDEX IF NOT EXISTS idx_translations_entity
 
 CREATE INDEX IF NOT EXISTS idx_translations_lookup
     ON translations(entity_type, entity_id, language_code, field);
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id  INTEGER PRIMARY KEY,
+    lang     TEXT NOT NULL DEFAULT 'en'
+);

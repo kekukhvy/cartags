@@ -3,51 +3,7 @@
 Covers all input formats the bot must handle from free-form user text.
 """
 
-from dataclasses import dataclass
-from enum import Enum, auto
-
-
-# ---------------------------------------------------------------------------
-# Inline implementation — mirrors utils/search_parser.py until it is created.
-# Replace with: from utils.search_parser import SearchQuery, SearchMode, parse_search_query
-# ---------------------------------------------------------------------------
-
-class SearchMode(Enum):
-    BY_PLATE_AND_COUNTRY = auto()
-    BY_PLATE_ONLY = auto()
-    UNKNOWN = auto()
-
-
-@dataclass(frozen=True)
-class SearchQuery:
-    mode: SearchMode
-    country: str | None
-    plate: str | None
-
-
-def parse_search_query(text: str) -> SearchQuery:
-    """
-    Parse raw user input into a structured SearchQuery.
-
-    Handles formats:
-      - "DE M"   → SearchQuery(BY_PLATE_AND_COUNTRY, country="DE", plate="M")
-      - "M"      → SearchQuery(BY_PLATE_ONLY, country=None, plate="M")
-      - ""       → SearchQuery(UNKNOWN, country=None, plate=None)
-    """
-    parts = text.strip().upper().split()
-    if len(parts) == 2:
-        return SearchQuery(
-            mode=SearchMode.BY_PLATE_AND_COUNTRY,
-            country=parts[0],
-            plate=parts[1],
-        )
-    if len(parts) == 1:
-        return SearchQuery(
-            mode=SearchMode.BY_PLATE_ONLY,
-            country=None,
-            plate=parts[0],
-        )
-    return SearchQuery(mode=SearchMode.UNKNOWN, country=None, plate=None)
+from utils.search_parser import SearchMode, SearchQuery, parse_search_query
 
 
 # ---------------------------------------------------------------------------

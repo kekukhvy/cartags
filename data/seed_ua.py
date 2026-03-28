@@ -1,6 +1,6 @@
 """Seed Ukraine (UA) into the CarTags database.
 
-Inserts the country record, its translations, and all 27 region codes
+Inserts the country record, its translations, and all 53 region codes
 with full translations in en/de/ru/uk.  All inserts are idempotent
 via INSERT OR IGNORE.
 
@@ -31,6 +31,7 @@ _COUNTRY_TRANSLATIONS: dict[str, str] = {
 # (plate_code, name_en, name_de, name_ru, name_uk,
 #              group_en, group_de, group_ru, group_uk)
 _REGIONS: list[tuple[str, str, str, str, str, str, str, str, str]] = [
+    # --- A-series ---
     ("AA", "Kyiv",             "Kiew",            "Киев",             "Київ",
            "Kyiv City",        "Stadt Kiew",       "Город Киев",       "Місто Київ"),
     ("AB", "Vinnytsia",        "Winnyzja",         "Винница",          "Вінниця",
@@ -89,6 +90,62 @@ _REGIONS: list[tuple[str, str, str, str, str, str, str, str, str]] = [
     ("CC", "Simferopol",       "Simferopol",       "Симферополь",      "Сімферополь",
            "Crimea",           "Krim",             "Крым",             "Крим"),
     ("CE", "Sevastopol",       "Sewastopol",       "Севастополь",      "Севастополь",
+           "Sevastopol",       "Sewastopol",       "Севастополь",      "Севастополь"),
+    # --- K-series (second series, same regions as A-series) ---
+    ("KA", "Kyiv",             "Kiew",            "Киев",             "Київ",
+           "Kyiv City",        "Stadt Kiew",       "Город Киев",       "Місто Київ"),
+    ("KB", "Vinnytsia",        "Winnyzja",         "Винница",          "Вінниця",
+           "Vinnytsia Oblast", "Oblast Winnyzja",  "Винницкая область","Вінницька область"),
+    ("KC", "Lutsk",            "Luzk",             "Луцк",             "Луцьк",
+           "Volyn Oblast",     "Oblast Wolyn",     "Волынская область","Волинська область"),
+    ("KE", "Dnipro",           "Dnipro",           "Днепр",            "Дніпро",
+           "Dnipropetrovsk Oblast", "Oblast Dnipropetrowsk",
+           "Днепропетровская область", "Дніпропетровська область"),
+    ("KH", "Donetsk",          "Donezk",           "Донецк",           "Донецьк",
+           "Donetsk Oblast",   "Oblast Donezk",    "Донецкая область", "Донецька область"),
+    ("KI", "Boryspil",         "Borispil",         "Борисполь",        "Бориспіль",
+           "Kyiv Oblast",      "Oblast Kiew",      "Киевская область", "Київська область"),
+    ("KM", "Zhytomyr",         "Schytomyr",        "Житомир",          "Житомир",
+           "Zhytomyr Oblast",  "Oblast Schytomyr", "Житомирская область","Житомирська область"),
+    ("KO", "Uzhhorod",         "Uschhorod",        "Ужгород",          "Ужгород",
+           "Zakarpattia Oblast","Oblast Transkarpatien",
+           "Закарпатская область","Закарпатська область"),
+    ("KR", "Zaporizhzhia",     "Saporischschja",   "Запорожье",        "Запоріжжя",
+           "Zaporizhzhia Oblast","Oblast Saporischschja",
+           "Запорожская область","Запорізька область"),
+    ("KT", "Ivano-Frankivsk",  "Iwano-Frankiwsk",  "Ивано-Франковск",  "Івано-Франківськ",
+           "Ivano-Frankivsk Oblast","Oblast Iwano-Frankiwsk",
+           "Ивано-Франковская область","Івано-Франківська область"),
+    ("KX", "Kharkiv",          "Charkiw",          "Харьков",          "Харків",
+           "Kharkiv Oblast",   "Oblast Charkiw",   "Харьковская область","Харківська область"),
+    ("NA", "Luhansk",          "Luhansk",          "Луганск",          "Луганськ",
+           "Luhansk Oblast",   "Oblast Luhansk",   "Луганская область","Луганська область"),
+    ("NV", "Lviv",             "Lemberg",          "Львов",            "Львів",
+           "Lviv Oblast",      "Oblast Lemberg",   "Львовская область","Львівська область"),
+    ("NE", "Mykolaiv",         "Mykolajiw",        "Николаев",         "Миколаїв",
+           "Mykolaiv Oblast",  "Oblast Mykolajiw", "Николаевская область","Миколаївська область"),
+    ("NN", "Odessa",           "Odessa",           "Одесса",           "Одеса",
+           "Odessa Oblast",    "Oblast Odessa",    "Одесская область", "Одеська область"),
+    ("NK", "Rivne",            "Riwne",            "Ровно",            "Рівне",
+           "Rivne Oblast",     "Oblast Riwne",     "Ровненская область","Рівненська область"),
+    ("NM", "Sumy",             "Sumy",             "Сумы",             "Суми",
+           "Sumy Oblast",      "Oblast Sumy",      "Сумская область",  "Сумська область"),
+    ("NO", "Ternopil",         "Ternopil",         "Тернополь",        "Тернопіль",
+           "Ternopil Oblast",  "Oblast Ternopil",  "Тернопольская область","Тернопільська область"),
+    ("NR", "Kherson",          "Cherson",          "Херсон",           "Херсон",
+           "Kherson Oblast",   "Oblast Cherson",   "Херсонская область","Херсонська область"),
+    ("NT", "Khmelnytskyi",     "Chmelnyzkyj",      "Хмельницкий",      "Хмельницький",
+           "Khmelnytskyi Oblast","Oblast Chmelnyzkyj",
+           "Хмельницкая область","Хмельницька область"),
+    ("NH", "Cherkasy",         "Tscherkassy",      "Черкассы",         "Черкаси",
+           "Cherkasy Oblast",  "Oblast Tscherkassy","Черкасская область","Черкаська область"),
+    ("NU", "Chernivtsi",       "Czernowitz",       "Черновцы",         "Чернівці",
+           "Chernivtsi Oblast","Oblast Czernowitz","Черновицкая область","Чернівецька область"),
+    ("NX", "Chernihiv",        "Tschernihiw",      "Чернигов",         "Чернігів",
+           "Chernihiv Oblast", "Oblast Tschernihiw","Черниговская область","Чернігівська область"),
+    ("UK", "Simferopol",       "Simferopol",       "Симферополь",      "Сімферополь",
+           "Crimea",           "Krim",             "Крым",             "Крим"),
+    ("SN", "Sevastopol",       "Sewastopol",       "Севастополь",      "Севастополь",
            "Sevastopol",       "Sewastopol",       "Севастополь",      "Севастополь"),
 ]
 
