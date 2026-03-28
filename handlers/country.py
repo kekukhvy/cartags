@@ -102,23 +102,30 @@ async def country_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await _send_country_page(update, country_code, page=1, lang=lang)
 
 
+_COUNTRY_BUTTONS_PER_ROW: int = 3
+
+
 def _build_country_list_keyboard(countries: list[CountryResult]) -> InlineKeyboardMarkup:
-    """Build inline keyboard with one button per country.
+    """Build inline keyboard with three buttons per row for country selection.
 
     Args:
         countries: List of CountryResult to render as buttons.
 
     Returns:
-        InlineKeyboardMarkup with one button per row.
+        InlineKeyboardMarkup with three buttons per row.
     """
-    buttons = [
-        [InlineKeyboardButton(
+    all_buttons = [
+        InlineKeyboardButton(
             text=f"{c.emoji} {c.name}",
             callback_data=f"{CallbackPrefix.SELECT_COUNTRY}:{c.code}",
-        )]
+        )
         for c in countries
     ]
-    return InlineKeyboardMarkup(buttons)
+    rows = [
+        all_buttons[i:i + _COUNTRY_BUTTONS_PER_ROW]
+        for i in range(0, len(all_buttons), _COUNTRY_BUTTONS_PER_ROW)
+    ]
+    return InlineKeyboardMarkup(rows)
 
 
 async def list_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

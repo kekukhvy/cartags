@@ -1,7 +1,7 @@
 """Verification script for the CarTags database after seeding.
 
-Prints summary counts, sample lookups in all languages, and a report
-of any regions missing translations.
+Prints summary counts, per-country verification, sample lookups in all
+languages, and a report of any regions missing translations.
 
 Usage::
 
@@ -17,6 +17,12 @@ logger = logging.getLogger(__name__)
 DB_PATH = Path(__file__).parent / "cartags.db"
 
 _LANGUAGES = ("en", "de", "ru", "uk")
+
+_ALL_COUNTRIES = [
+    "DE", "AT", "PL", "CH", "CZ", "RO", "BG", "HR", "RS",
+    "SI", "ME", "MK", "GR", "UA", "BY", "RU", "TR", "XK",
+    "NO", "IE",
+]
 
 
 def print_counts(conn: sqlite3.Connection) -> None:
@@ -116,10 +122,85 @@ def check_missing_translations(conn: sqlite3.Connection) -> None:
         print("  None — all regions have translations in all 4 languages.")
 
 
+def verify_country(conn: sqlite3.Connection, country_code: str) -> None:
+    """Print region count and flag missing translations for a country.
+
+    For each country prints:
+    - Total region count
+    - Count of regions missing any of the 4 language translations
+    - One sample lookup (first region alphabetically) with all 4 translations
+
+    Args:
+        conn:         An open SQLite connection.
+        country_code: ISO 3166-1 alpha-2 (or XK) country code.
+    """
+    total_row = conn.execute(
+        """
+        SELECT COUNT(*) FROM regions r
+        JOIN countries c ON c.id = r.country_id
+        WHERE UPPER(c.code) = UPPER(?)
+        """,
+        (country_code,),
+    ).fetchone()
+    total = total_row[0] if total_row else 0
+
+    missing_count_row = conn.execute(
+        """
+        SELECT COUNT(*) FROM regions r
+        JOIN countries c ON c.id = r.country_id
+        WHERE UPPER(c.code) = UPPER(?)
+          AND NOT EXISTS (
+              SELECT 1 FROM translations t
+              WHERE t.entity_type = 'region'
+                AND t.entity_id = r.id
+                AND t.field = 'name'
+          )
+        """,
+        (country_code,),
+    ).fetchone()
+    missing = missing_count_row[0] if missing_count_row else 0
+
+    first_row = conn.execute(
+        """
+        SELECT r.plate_code FROM regions r
+        JOIN countries c ON c.id = r.country_id
+        WHERE UPPER(c.code) = UPPER(?)
+        ORDER BY r.plate_code ASC
+        LIMIT 1
+        """,
+        (country_code,),
+    ).fetchone()
+
+    status = "OK" if missing == 0 else f"MISSING {missing}"
+    print(f"  {country_code}: {total} regions, translations: {status}")
+
+    if first_row:
+        plate = first_row[0]
+        translations = {
+            lang: (_fetch_region_name(conn, country_code, plate, lang) or "(missing)")
+            for lang in _LANGUAGES
+        }
+        print(f"    sample [{plate}]: " + " | ".join(
+            f"{lang}={translations[lang]}" for lang in _LANGUAGES
+        ))
+
+
+def _verify_all_countries(conn: sqlite3.Connection) -> None:
+    """Run verify_country for every seeded country.
+
+    Args:
+        conn: An open SQLite connection.
+    """
+    print("\nPer-country verification:")
+    for code in _ALL_COUNTRIES:
+        verify_country(conn, code)
+
+
 def main() -> None:
     """Open the database, run all verification checks, and close.
 
-    Prints counts, sample lookups, and missing-translation report.
+    Prints counts, per-country summary, sample lookups, and
+    missing-translation report.
     """
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(message)s")
     conn = sqlite3.connect(DB_PATH)
@@ -128,6 +209,7 @@ def main() -> None:
     try:
         print("=== CarTags DB Verification ===\n")
         print_counts(conn)
+        _verify_all_countries(conn)
         lookup_sample(conn, "DE", "M")
         lookup_sample(conn, "AT", "W")
         lookup_sample(conn, "UA", "AA")
